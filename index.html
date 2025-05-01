@@ -79,7 +79,7 @@
 
     if (!userMobile || !token) {
       alert('Please login first.');
-      window.location.href = 'Login.html';
+      window.location.href = 'login.html';
     }
 
     document.getElementById('userLabel').innerText = userMobile;
@@ -88,7 +88,7 @@
     function logout() {
       localStorage.removeItem('userMobile');
       localStorage.removeItem('token');
-      window.location.href = 'Login.html';
+      window.location.href = 'login.html';
     }
 
     function toggleTheme() {
