@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-white dark:bg-black text-black dark:text-white transition-all duration-300 h-screen overflow-hidden">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700">
+    <button onclick="toggleSidebar()" class="md:hidden text-2xl font-bold">☰</button>
+    <h1 class="text-2xl font-bold">Chat App</h1>
+    <div class="space-x-2">
+      <button onclick="toggleTheme()" class="text-xl" title="Toggle Theme"><span id="theme-icon">🌙</span></button>
+      <button onclick="logout()" class="text-sm border px-3 py-1 rounded">Logout</button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="flex h-[calc(100vh-64px)]">
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-1/3 md:w-1/4 border-r border-gray-300 dark:border-gray-700 p-4 overflow-y-auto hidden md:block">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="font-semibold" id="userLabel">You</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Online</p>
+        </div>
+        <button onclick="openAddContactModal()" class="bg-black text-white px-2 py-1 rounded text-sm">+ Add</button>
+      </div>
+      <div id="contact-list" class="space-y-3"></div>
+    </div>
+
+    <!-- Chat Section -->
+    <div id="chat-section" class="flex-1 flex flex-col justify-between hidden">
+      <!-- <div id="chat-header" class="p-4 border-b border-gray-300 dark:border-gray-700"> -->
+        <div id="chat-header" class="p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
+
+        <h2 class="text-xl font-semibold">Select a Contact</h2>
+      </div>
+      
+      <!-- Chat messages -->
+      <div id="chat-messages" class="p-4 space-y-4 overflow-y-auto flex-1"></div>
+
+
+
+      <!-- Message input -->
+      <div class="p-4 border-t border-gray-300 dark:border-gray-700">
+        <div class="flex space-x-2">
+          <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-black dark:text-white" />
+          <button onclick="sendMessage()" class="px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Contact Modal -->
+  <div id="addContactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-80">
+      <h2 class="text-xl font-semibold mb-4">Add New Contact</h2>
+      <input type="text" id="contactMobile" class="w-full text-blue-500 p-2 border border-gray-300 dark:border-gray-600 rounded mb-4" placeholder="Mobile Number" />
+      <button onclick="submitAddContact()" class="bg-black text-white py-2 px-4 rounded w-full">Add</button>
+      <button onclick="closeAddContactModal()" class="bg-gray-500 text-white py-2 px-4 rounded w-full mt-2">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const userMobile = localStorage.getItem('userMobile');
+    const token = localStorage.getItem('token');
+    const socket = io('https://jgqw00mq-3002.inc1.devtunnels.ms');
+    let currentContact = null;
+
+    if (!userMobile || !token) {
+      alert('Please login first.');
+      window.location.href = 'Login.html';
+    }
+
+    document.getElementById('userLabel').innerText = userMobile;
+    socket.emit('register-mobile', userMobile);
+
+    function logout() {
+      localStorage.removeItem('userMobile');
+      localStorage.removeItem('token');
+      window.location.href = 'Login.html';
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      document.getElementById('theme-icon').textContent = html.classList.contains('dark') ? '🌙' : '☀️';
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('hidden');
+    }
+
+    async function fetchContacts() {
+      try {
+        const res = await fetch(`https://jgqw00mq-3002.inc1.devtunnels.ms/contacts?mobile=${userMobile}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const contacts = await res.json();
+        const contactList = document.getElementById('contact-list');
+        contactList.innerHTML = '';
+        contacts.forEach(contact => {
+          const div = document.createElement('div');
+          div.className = 'p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded';
+          div.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.mobile}</small>`;
+          div.onclick = () => openChat(contact);
+          contactList.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Error loading contacts', err);
+      }
+    }
+
+   
+function openChat(contact) {
+  currentContact = contact;
+  document.getElementById('chat-section').classList.remove('hidden');
+  document.getElementById('chat-header').innerHTML = `
+    <h2 class="text-xl font-semibold text-green-400">
+      Chat between <span class="text-yellow-400">${userMobile}</span> and <span class="text-yellow-400">${contact.name}</span>
+    </h2>
+  `;
+  loadMessages(contact.mobile);
+}
+
+
+function createMessageBubble(msg, fromSelf) {
+  const el = document.createElement('div');
+  el.className = 'bg-green-200 text-black p-3 rounded-xl shadow mb-2 max-w-xs break-words' + (fromSelf ? ' ml-auto' : '');
+
+  // Convert timestamp to readable format
+  const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  el.innerHTML = `
+    <div class="text-sm font-semibold mb-1">${fromSelf ? 'You' : currentContact.name}</div>
+    <div>${msg.message}</div>
+    <div class="text-xs text-gray-600 mt-1 text-right">${time}</div>
+  `;
+  return el;
+}
+
+    async function loadMessages(toMobile) {
+      try {
+        const res = await fetch(`https://jgqw00mq-3002.inc1.devtunnels.ms/messages?fromMobile=${userMobile}&toMobile=${toMobile}`);
+        const messages = await res.json();
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        messages.forEach(msg => {
+          const fromSelf = msg.sender_id === userMobile;
+          const el = createMessageBubble(msg, fromSelf);
+          chatMessages.appendChild(el);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } catch (err) {
+        console.error('Error loading messages', err);
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('message-input');
+      const message = input.value.trim();
+      if (!message || !currentContact) return;
+
+      socket.emit('send-message', {
+        from: userMobile,
+        to: currentContact.mobile,
+        message
+      });
+
+      const msg = { message };
+      const el = createMessageBubble(msg, true);
+      document.getElementById('chat-messages').appendChild(el);
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      input.value = '';
+    }
+
+    // Handle "Enter" key to send message
+    document.getElementById('message-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    socket.on('receive-message', (msg) => {
+      if (!currentContact) return;
+      const isRelevant =
+        (msg.from === currentContact.mobile && msg.to === userMobile) ||
+        (msg.from === userMobile && msg.to === currentContact.mobile);
+
+      if (isRelevant) {
+        const fromSelf = msg.from === userMobile;
+        const el = createMessageBubble(msg, fromSelf);
+        document.getElementById('chat-messages').appendChild(el);
+        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      }
+    });
+
+    function openAddContactModal() {
+      document.getElementById('addContactModal').classList.remove('hidden');
+    }
+
+    function closeAddContactModal() {
+      document.getElementById('addContactModal').classList.add('hidden');
+    }
+
+    async function submitAddContact() {
+      const contactMobile = document.getElementById('contactMobile').value.trim();
+      if (!contactMobile) return;
+
+      try {
+        const res = await fetch('https://jgqw00mq-3002.inc1.devtunnels.ms/add-contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ myMobile: userMobile, contactMobile })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert('Contact added successfully!');
+          closeAddContactModal();
+          fetchContacts();
+        } else {
+          alert(result.error || 'Failed to add contact.');
+        }
+      } catch (err) {
+        console.error('Error adding contact:', err);
+      }
+    }
+
+    window.onload = fetchContacts;
+  </script>
+</body>
+</html>
