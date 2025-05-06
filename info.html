@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ramesh Jatav | Chat App Developer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white">
+
+  <!-- Header -->
+  <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl sm:text-2xl font-bold">💬 Ramesh Jatav</h1>
+      <nav class="space-x-3 text-sm hidden md:block">
+        <a href="#about" class="hover:text-blue-600">About</a>
+        <a href="#education" class="hover:text-blue-600">Education</a>
+        <a href="#project" class="hover:text-blue-600">Project</a>
+        <a href="#tech" class="hover:text-blue-600">Tech Stack</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- About Section -->
+  <section id="about" class="py-12 px-4 md:px-0">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+      <img src="1724980562768.jpg" alt="Ramesh Jatav" class="rounded-xl shadow-lg mx-auto" />
+      <div>
+        <h2 class="text-3xl font-bold mb-4">👨‍💻 About Me</h2>
+        <p class="mb-4 text-lg leading-relaxed">
+          I'm <strong>Ramesh Jatav</strong>, a dedicated <strong>Backend Developer</strong> with over 2 years of experience in building robust server-side applications using <strong>Node.js</strong>, <strong>MySQL</strong>, and <strong>Sequelize ORM</strong>. I specialize in crafting secure APIs, integrating JWT-based authentication, and optimizing databases.
+        </p>
+        <p class="text-lg">I’m from <strong>Alwar, Rajasthan</strong> and passionate about writing professional-grade backend systems for real-world applications.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Education -->
+  <section id="education" class="py-12 bg-white dark:bg-gray-800">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-6">🎓 Education</h2>
+      <ul class="space-y-4 text-lg">
+        <li><strong>ADWP Diploma</strong> – Web Development (1 Year) – DIIT Educom, Alwar</li>
+        <li><strong>12th</strong> – GOVT Senior Secondary School, Kerwawal, Alwar</li>
+        <li><strong>10th</strong> – GOVT Senior Secondary School, Kerwawal, Alwar</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Project -->
+  <section id="project" class="py-12 px-4 md:px-0 bg-gray-100 dark:bg-gray-900">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6">💬 Real-Time Chat App Project</h2>
+      <p class="text-lg mb-6 leading-relaxed">
+        This is a full-stack real-time chat application. Users register with a mobile number and password, log in securely, and can add contacts. Once both users accept the connection, they can securely chat in real-time with optional image sharing.
+      </p>
+      <ul class="list-disc pl-6 mb-6 text-lg space-y-2">
+        <li>Registration/Login using mobile number & password</li>
+        <li>JWT authentication for secure sessions</li>
+        <li>Real-time messaging using Socket.IO</li>
+        <li>Image sharing with upload preview</li>
+        <li>Mobile-first responsive layout</li>
+      </ul>
+
+      <!-- Screenshots -->
+     <!-- Screenshots Section -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+    <!-- Login Screenshot -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow hover:shadow-xl hover:shadow-blue-100 transition-transform transform hover:-translate-y-1 sm:hover:scale-105">
+      <img src="login.png" alt="Login Screen" class="rounded-lg w-full" />
+      <p class="mt-2 text-center text-sm text-gray-700 dark:text-gray-300">
+        Login screen of the Chat App for secure user access.
+      </p>
+    </div>
+  
+    <!-- Register Screenshot -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow hover:shadow-xl hover:shadow-blue-100 transition-transform transform hover:-translate-y-1 sm:hover:scale-105">
+      <img src="register.png" alt="Register Screen" class="rounded-lg w-full" />
+      <p class="mt-2 text-center text-sm text-gray-700 dark:text-gray-300">
+        Registration screen for new users to sign up easily.
+      </p>
+    </div>
+  
+    <!-- Chat UI Screenshot -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow hover:shadow-xl hover:shadow-blue-100 transition-transform transform hover:-translate-y-1 sm:hover:scale-105">
+      <img src="chatimg.png" alt="Chat UI" class="rounded-lg w-full" />
+      <p class="mt-2 text-center text-sm text-gray-700 dark:text-gray-300">
+        Clean and responsive chat interface for real-time messaging.
+      </p>
+    </div>
+  
+    <!-- Dark Mode Brightness -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow hover:shadow-xl hover:shadow-blue-100 transition-transform transform hover:-translate-y-1 sm:hover:scale-105">
+      <img src="brit_dark.png" alt="Dark Mode Brightness" class="rounded-lg w-full" />
+      <p class="mt-2 text-center text-sm text-gray-700 dark:text-gray-300">
+        Chat App in dark mode with adjusted brightness for night use.
+      </p>
+    </div>
+  
+    <!-- Light Mode Brightness -->
+    <div class="bg-white dark:bg-gray-800 p-2 rounded-lg shadow hover:shadow-blue-100 hover:shadow-xl transition-transform transform hover:-translate-y-1 sm:hover:scale-105">
+      <img src="brit_light.png" alt="Light Mode Brightness" class="rounded-lg w-full" />
+      <p class="mt-2 text-center text-sm text-gray-700 dark:text-gray-300">
+        Chat App in light mode with optimized brightness for daylight.
+      </p>
+    </div>
+  </div>
+  
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section id="tech" class="py-12 bg-white dark:bg-gray-800">
+    <div class="max-w-5xl mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-6">🛠️ Technology Stack</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-lg">
+        <div>🔹 Node.js</div>
+        <div>🔹 Express.js</div>
+        <div>🔹 MySQL</div>
+        <div>🔹 Sequelize</div>
+        <div>🔹 JWT Auth</div>
+        <div>🔹 Socket.IO</div>
+        <div>🔹 Tailwind CSS</div>
+        <div>🔹 HTML + JS</div>
+        <div>🔹 GitHub</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white text-center py-6">
+    <p>© 2025 Ramesh Jatav. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
