@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat App</title>
-  <link rel="icon" href="titleimg.jpg" type="image/x-icon" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' };
-  </script>
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="keywords" content="Ramesh, ramesh jatav, chatApp, chat app, chat website, chat, amit, #amit, #ramesh, #web, #webdeveloper, RAMESH JATAV" />
+    <title>Chat App</title>
+    <link rel="icon" href="titleimg.jpg" type="image/x-icon" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+  </head>
+  
 <body class="bg-white dark:bg-black text-black dark:text-white transition-all duration-300 h-screen overflow-hidden">
 
   <!-- Header -->
@@ -20,14 +22,17 @@
     <div class="space-x-2">
       <button onclick="toggleTheme()" class="text-xl" title="Toggle Theme"><span id="theme-icon">🌙</span></button>
       <button onclick="logout()" class="text-sm border px-3 py-1 rounded">Logout</button>
+      <a href="info.html" class="text-sm border px-3 py-1 rounded rounded-full ">i</a>
+ 
     </div>
   </div>
 
   <!-- Layout -->
-  <div class="flex h-[calc(100vh-64px)]">
+  <div class="flex h-[calc(100vh-64px)] relative">
 
     <!-- Sidebar -->
-    <div id="sidebar" class="w-1/3 md:w-1/4 border-r border-gray-300 dark:border-gray-700 p-4 overflow-y-auto hidden md:block">
+    <div id="sidebar"
+         class="fixed inset-y-0 left-0 w-2/3 max-w-xs bg-white dark:bg-gray-900 z-40 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 md:block md:w-1/4 border-r border-gray-300 dark:border-gray-700 p-4 overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <div>
           <p class="font-semibold" id="userLabel">You</p>
@@ -36,25 +41,38 @@
         <button onclick="openAddContactModal()" class="bg-black text-white px-2 py-1 rounded text-sm">+ Add</button>
       </div>
       <div id="contact-list" class="space-y-3"></div>
+
     </div>
+
+    <!-- Backdrop for mobile -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
 
     <!-- Chat Section -->
     <div id="chat-section" class="flex-1 flex flex-col justify-between hidden">
-      <!-- <div id="chat-header" class="p-4 border-b border-gray-300 dark:border-gray-700"> -->
-        <div id="chat-header" class="p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
-
-        <h2 class="text-xl font-semibold">Select a Contact</h2>
+      <!-- Chat Header -->
+      <div id="chat-header" class=" hidden sm:block p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
+        <h2 class="text-xl font-semibold text-green-400 ">
+          Chat between <span class="text-yellow-400" id="chatFrom"></span> and <span class="text-yellow-400" id="chatTo"></span>
+        </h2>
       </div>
-      
-      <!-- Chat messages -->
-      <div id="chat-messages" class="p-4 space-y-4 overflow-y-auto flex-1"></div>
 
+      <!-- Chat Messages -->
+      <div id="chat-messages"
+      class="p-4 space-y-4 overflow-y-auto flex-1 bg-cover bg-center
+             [background-image:url('bgChat.jpg')] 
+             sm:[background-image:url('bgChat.jpg')] 
+             max-sm:[background-image:url('1724980562768.jpg')]">
+ </div>
+ 
 
-
-      <!-- Message input -->
-      <div class="p-4 border-t border-gray-300 dark:border-gray-700">
-        <div class="flex space-x-2">
-          <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-black dark:text-white" />
+      <!-- Message Input (sticky above keyboard) -->
+      <div class="p-4 border-t border-gray-300 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-black z-10">
+        <div class="flex space-x-2 items-center">
+          <button title="Sort" class="text-xl">🔽</button>
+          <input type="file" id="image-input" accept="image/*" class="hidden" onchange="sendImage()" />
+          <button onclick="document.getElementById('image-input').click()" title="Send Image" class="text-xl">📎</button>
+          <input type="text" id="message-input" placeholder="Type your message..."
+                 class="flex-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-black dark:text-white" />
           <button onclick="sendMessage()" class="px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded">Send</button>
         </div>
       </div>
@@ -75,10 +93,11 @@
   <script>
     const userMobile = localStorage.getItem('userMobile');
     const token = localStorage.getItem('token');
+    const userId = Number(localStorage.getItem('userId'));
     const socket = io('https://jgqw00mq-3002.inc1.devtunnels.ms');
     let currentContact = null;
 
-    if (!userMobile || !token) {
+    if (!userMobile || !token || !userId) {
       alert('Please login first.');
       window.location.href = 'login.html';
     }
@@ -87,8 +106,7 @@
     socket.emit('register-mobile', userMobile);
 
     function logout() {
-      localStorage.removeItem('userMobile');
-      localStorage.removeItem('token');
+      localStorage.clear();
       window.location.href = 'login.html';
     }
 
@@ -99,7 +117,19 @@
     }
 
     function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('hidden');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      const isOpen = sidebar.classList.contains('translate-x-0');
+
+      if (isOpen) {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        backdrop.classList.remove('hidden');
+      }
     }
 
     async function fetchContacts() {
@@ -122,32 +152,27 @@
       }
     }
 
-   
-function openChat(contact) {
-  currentContact = contact;
-  document.getElementById('chat-section').classList.remove('hidden');
-  document.getElementById('chat-header').innerHTML = `
-    <h2 class="text-xl font-semibold text-green-400">
-      Chat between <span class="text-yellow-400">${userMobile}</span> and <span class="text-yellow-400">${contact.name}</span>
-    </h2>
-  `;
-  loadMessages(contact.mobile);
-}
+    function openChat(contact) {
+      currentContact = contact;
+      document.getElementById('chat-section').classList.remove('hidden');
+      document.getElementById('chatFrom').textContent = userMobile;
+      document.getElementById('chatTo').textContent = contact.name;
+      loadMessages(contact.mobile);
+      toggleSidebar(); // Hide sidebar on mobile when contact is selected
+    }
 
-
-function createMessageBubble(msg, fromSelf) {
-  const el = document.createElement('div');
-  el.className = 'bg-green-200 text-black p-3 rounded-xl shadow mb-2 max-w-xs break-words' + (fromSelf ? ' ml-auto' : '');
-
-  // Convert timestamp to readable format
-  const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  el.innerHTML = `
-    <div class="text-sm font-semibold mb-1">${fromSelf ? 'You' : currentContact.name}</div>
-    <div>${msg.message}</div>
-    <div class="text-xs text-gray-600 mt-1 text-right">${time}</div>
-  `;
-  return el;
-}
+    function createMessageBubble(msg, fromSelf) {
+      const el = document.createElement('div');
+      el.className = 'bg-green-200 text-black p-3 rounded-xl shadow mb-2 max-w-xs break-words' + (fromSelf ? ' ml-auto' : '');
+      const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      el.innerHTML = `
+        <div class="text-sm font-semibold mb-1">${fromSelf ? 'You' : currentContact.name}</div>
+        <div>${msg.message || ''}</div>
+        ${msg.imageUrl ? `<div class="mt-2"><img src="${msg.imageUrl}" alt="sent image" class="max-w-xs rounded" /></div>` : ''}
+        <div class="text-xs text-gray-600 mt-1 text-right">${time}</div>
+      `;
+      return el;
+    }
 
     async function loadMessages(toMobile) {
       try {
@@ -156,7 +181,7 @@ function createMessageBubble(msg, fromSelf) {
         const chatMessages = document.getElementById('chat-messages');
         chatMessages.innerHTML = '';
         messages.forEach(msg => {
-          const fromSelf = msg.sender_id === userMobile;
+          const fromSelf = msg.sender_id === userId;
           const el = createMessageBubble(msg, fromSelf);
           chatMessages.appendChild(el);
         });
@@ -177,14 +202,14 @@ function createMessageBubble(msg, fromSelf) {
         message
       });
 
-      const msg = { message };
+      const msg = { message, sender_id: userId, timestamp: Date.now() };
       const el = createMessageBubble(msg, true);
-      document.getElementById('chat-messages').appendChild(el);
-      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+      const chatMessages = document.getElementById('chat-messages');
+      chatMessages.appendChild(el);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
       input.value = '';
     }
 
-    // Handle "Enter" key to send message
     document.getElementById('message-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -199,10 +224,11 @@ function createMessageBubble(msg, fromSelf) {
         (msg.from === userMobile && msg.to === currentContact.mobile);
 
       if (isRelevant) {
-        const fromSelf = msg.from === userMobile;
+        const fromSelf = msg.sender_id === userId;
         const el = createMessageBubble(msg, fromSelf);
-        document.getElementById('chat-messages').appendChild(el);
-        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(el);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
       }
     });
 
@@ -239,6 +265,42 @@ function createMessageBubble(msg, fromSelf) {
       } catch (err) {
         console.error('Error adding contact:', err);
       }
+    }
+
+    async function sendImage() {
+      const input = document.getElementById('image-input');
+      const file = input.files[0];
+      if (!file || !currentContact) return;
+
+      const formData = new FormData();
+      formData.append('from', userMobile);
+      formData.append('to', currentContact.mobile);
+      formData.append('image', file);
+
+      try {
+        const res = await fetch('https://jgqw00mq-3002.inc1.devtunnels.ms/send-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          const msg = { message: '[Image]', imageUrl: result.imageUrl, sender_id: userId, timestamp: Date.now() };
+          const el = createMessageBubble(msg, true);
+          const chatMessages = document.getElementById('chat-messages');
+          chatMessages.appendChild(el);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+          alert('Image upload failed.');
+        }
+      } catch (err) {
+        console.error('Image upload error:', err);
+      }
+
+      input.value = '';
     }
 
     window.onload = fetchContacts;
