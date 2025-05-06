@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>login</title>
+  <title>Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,11 +21,11 @@
     </button>
   </div>
 
-  <!-- login Box -->
+  <!-- Login Box -->
   <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-sm w-full text-gray-900 dark:text-white">
-    <h2 class="text-2xl font-bold text-center mb-6">login</h2>
+    <h2 class="text-2xl font-bold text-center mb-6">Login</h2>
 
-    <!-- login Form -->
+    <!-- Login Form -->
     <form id="loginForm">
       <div class="mb-4">
         <label for="mobile" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mobile Number</label>
@@ -44,7 +44,7 @@
 
     <p class="mt-4 text-center text-sm">
       Don't have an account? 
-      <a href="register.html" class="text-blue-600 hover:underline dark:text-blue-400">register here</a>
+      <a href="Register.html" class="text-blue-600 hover:underline dark:text-blue-400">Register here</a>
     </p>
   </div>
 
@@ -87,16 +87,20 @@
 
         const data = await response.json();
 
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('userMobile', mobile);
-          window.location.href = 'index.html';
-        } else {
-          alert(data.error || 'login failed.');
-        }
+
+ if (response.ok) {
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('userMobile', data.user.mobile);
+  localStorage.setItem('userId', data.user.id); // Store ID for future use
+  window.location.href = 'test.html';
+} else {
+  alert(data.error || 'Login failed.');
+}
+
+    
       } catch (error) {
         alert('Network error. Please try again.');
-        console.error('login error:', error);
+        console.error('Login error:', error);
       }
     });
   </script>

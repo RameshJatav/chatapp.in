@@ -49,17 +49,10 @@
       <!-- Message input -->
       <div class="p-4 border-t border-gray-300 dark:border-gray-700">
         <div class="flex space-x-2 items-center">
-          <!-- Sort icon -->
           <button title="Sort" class="text-xl">🔽</button>
-
-          <!-- File input for image -->
           <input type="file" id="image-input" accept="image/*" class="hidden" onchange="sendImage()" />
           <button onclick="document.getElementById('image-input').click()" title="Send Image" class="text-xl">📎</button>
-
-          <!-- Message input -->
           <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-black dark:text-white" />
-
-          <!-- Send button -->
           <button onclick="sendMessage()" class="px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded">Send</button>
         </div>
       </div>
@@ -80,12 +73,13 @@
   <script>
     const userMobile = localStorage.getItem('userMobile');
     const token = localStorage.getItem('token');
+    const userId = Number(localStorage.getItem('userId'));
     const socket = io('https://jgqw00mq-3002.inc1.devtunnels.ms');
     let currentContact = null;
 
-    if (!userMobile || !token) {
+    if (!userMobile || !token || !userId) {
       alert('Please login first.');
-      window.location.href = 'login.html';
+      window.location.href = 'Login.html';
     }
 
     document.getElementById('userLabel').innerText = userMobile;
@@ -94,7 +88,8 @@
     function logout() {
       localStorage.removeItem('userMobile');
       localStorage.removeItem('token');
-      window.location.href = 'login.html';
+      localStorage.removeItem('userId');
+      window.location.href = 'Login.html';
     }
 
     function toggleTheme() {
@@ -141,7 +136,6 @@
     function createMessageBubble(msg, fromSelf) {
       const el = document.createElement('div');
       el.className = 'bg-green-200 text-black p-3 rounded-xl shadow mb-2 max-w-xs break-words' + (fromSelf ? ' ml-auto' : '');
-
       const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       el.innerHTML = `
         <div class="text-sm font-semibold mb-1">${fromSelf ? 'You' : currentContact.name}</div>
@@ -159,7 +153,7 @@
         const chatMessages = document.getElementById('chat-messages');
         chatMessages.innerHTML = '';
         messages.forEach(msg => {
-          const fromSelf = msg.sender_id === userMobile;
+          const fromSelf = msg.sender_id === userId;
           const el = createMessageBubble(msg, fromSelf);
           chatMessages.appendChild(el);
         });
@@ -180,14 +174,13 @@
         message
       });
 
-      const msg = { message };
+      const msg = { message, sender_id: userId, timestamp: Date.now() };
       const el = createMessageBubble(msg, true);
       document.getElementById('chat-messages').appendChild(el);
       document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
       input.value = '';
     }
 
-    // Handle "Enter" key to send message
     document.getElementById('message-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -202,7 +195,7 @@
         (msg.from === userMobile && msg.to === currentContact.mobile);
 
       if (isRelevant) {
-        const fromSelf = msg.from === userMobile;
+        const fromSelf = msg.sender_id === userId;
         const el = createMessageBubble(msg, fromSelf);
         document.getElementById('chat-messages').appendChild(el);
         document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
@@ -265,7 +258,7 @@
 
         const result = await res.json();
         if (res.ok) {
-          const msg = { message: '[Image]', imageUrl: result.imageUrl, timestamp: Date.now() };
+          const msg = { message: '[Image]', imageUrl: result.imageUrl, sender_id: userId, timestamp: Date.now() };
           const el = createMessageBubble(msg, true);
           document.getElementById('chat-messages').appendChild(el);
           document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
@@ -276,7 +269,7 @@
         console.error('Image upload error:', err);
       }
 
-      input.value = ''; // Reset input
+      input.value = '';
     }
 
     window.onload = fetchContacts;
