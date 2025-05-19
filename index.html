@@ -1,75 +1,317 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat App</title>
-    <link rel="icon" href="titleimg.jpg" type="image/x-icon" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
-    <script>
-      tailwind.config = { darkMode: 'class' };
-    </script>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App</title>
+  <link rel="icon" href="titleimg.jpg" type="image/x-icon" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+
 <body class="bg-white dark:bg-black text-black dark:text-white transition-all duration-300 h-screen overflow-hidden">
 
   <!-- Header -->
   <div class="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700">
+    <button onclick="toggleSidebar()" class="md:hidden text-2xl font-bold">☰</button>
     <h1 class="text-2xl font-bold">Chat App</h1>
+    <div class="space-x-2">
+      <button onclick="toggleTheme()" class="text-xl" title="Toggle Theme"><span id="theme-icon">🌙</span></button>
+      <button onclick="logout()" class="text-sm border px-3 py-1 rounded">Logout</button>
+      <a href="info.html" class="text-sm border px-3 py-1 rounded-full">i</a>
+    </div>
   </div>
 
   <!-- Layout -->
   <div class="flex h-[calc(100vh-64px)] relative">
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 w-2/3 max-w-xs bg-white dark:bg-gray-900 z-40 transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 md:block md:w-1/4 border-r border-gray-300 dark:border-gray-700 p-4 overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="font-semibold" id="userLabel">You</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Online</p>
+        </div>
+        <button onclick="openAddContactModal()" class="bg-black text-white px-2 py-1 rounded text-sm">+ Add</button>
+      </div>
+      <div id="contact-list" class="space-y-3"></div>
+    </div>
+
+    <!-- Backdrop -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
+
     <!-- Chat Section -->
-    <div id="chat-section" class="flex-1 flex flex-col justify-between w-full">
+    <div id="chat-section" class="flex-1 flex flex-col justify-between hidden">
       <!-- Chat Header -->
-      <div class="p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
-        <h2 class="text-xl font-semibold text-green-400">Chat Screen</h2>
+      <div id="chat-header" class="hidden sm:block p-4 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
+        <h2 class="text-xl font-semibold text-green-400">
+          Chat between <span class="text-yellow-400" id="chatFrom"></span> and <span class="text-yellow-400" id="chatTo"></span>
+        </h2>
       </div>
 
       <!-- Chat Messages -->
-      <div id="chat-messages" class="p-4 space-y-4 overflow-y-auto flex-1">
-        <!-- Messages will go here -->
+      <div id="chat-messages" class="p-4 space-y-4 overflow-y-auto flex-1 bg-cover bg-center"></div>
+
+      <!-- Message Input -->
+      <div class="p-4 border-t border-gray-300 dark:border-gray-700 sticky bottom-0 bg-white dark:bg-black z-10">
+        <div class="flex space-x-2 items-center">
+          <button title="Sort" class="text-xl">🔽</button>
+          <input type="file" id="image-input" accept="image/*" class="hidden" onchange="sendImage()" />
+          <button onclick="document.getElementById('image-input').click()" title="Send Image" class="text-xl">📎</button>
+          <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-black dark:text-white" />
+          <button onclick="sendMessage()" class="px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded">Send</button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Add Contact Modal -->
+  <div id="addContactModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg w-80">
+      <h2 class="text-xl font-semibold mb-4">Add New Contact</h2>
+      <input type="text" id="contactMobile" class="w-full text-blue-500 p-2 border border-gray-300 dark:border-gray-600 rounded mb-4" placeholder="Mobile Number" />
+      <button onclick="submitAddContact()" class="bg-black text-white py-2 px-4 rounded w-full">Add</button>
+      <button onclick="closeAddContactModal()" class="bg-gray-500 text-white py-2 px-4 rounded w-full mt-2">Cancel</button>
     </div>
   </div>
 
   <!-- Script -->
   <script>
-    const specialNumbers = ['143143143143', '143143143100'];
+    const userMobile = localStorage.getItem('userMobile');
+    const token = localStorage.getItem('token');
+    const userId = Number(localStorage.getItem('userId'));
+    const socket = io('https://jgqw00mq-3002.inc1.devtunnels.ms');
+    let currentContact = null;
 
-    function setChatBackgroundImage() {
-      const chatMessages = document.getElementById('chat-messages');
-      const userMobile = localStorage.getItem('userMobile') || '';
-      const isSpecialUser = specialNumbers.includes(userMobile);
-      const isMobile = window.innerWidth <= 768;
-
-      if (!chatMessages) return;
-
-      if (!isMobile) {
-        chatMessages.style.backgroundImage = "url('bgChat.jpg')";
-      } else if (isSpecialUser) {
-        chatMessages.style.backgroundImage = "url('deep_chat.png')";
-      } else {
-        chatMessages.style.backgroundImage = "url('1724980562768.jpg')";
-      }
-
-      chatMessages.style.backgroundSize = "cover";
-      chatMessages.style.backgroundPosition = "center";
+    if (!userMobile || !token || !userId) {
+      alert('Please login first.');
+      window.location.href = 'login.html';
     }
 
-    // Call when screen resizes
-    window.addEventListener('resize', setChatBackgroundImage);
+    document.getElementById('userLabel').innerText = userMobile;
+    socket.emit('register-mobile', userMobile);
 
-    // Call on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      // Simulate login by setting mobile for testing (you can skip this)
-      if (!localStorage.getItem('userMobile')) {
-        localStorage.setItem('userMobile', '143143143143'); // <-- Change number here to test
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      document.getElementById('theme-icon').textContent = html.classList.contains('dark') ? '🌙' : '☀️';
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      const isOpen = sidebar.classList.contains('translate-x-0');
+
+      if (isOpen) {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      } else {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        backdrop.classList.remove('hidden');
+      }
+    }
+
+    async function fetchContacts() {
+      try {
+        const res = await fetch(`https://jgqw00mq-3002.inc1.devtunnels.ms/contacts?mobile=${userMobile}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const contacts = await res.json();
+        const contactList = document.getElementById('contact-list');
+        contactList.innerHTML = '';
+        contacts.forEach(contact => {
+          const div = document.createElement('div');
+          div.className = 'p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded';
+          div.innerHTML = `<strong>${contact.name}</strong><br><small>${contact.mobile}</small>`;
+          div.onclick = () => openChat(contact);
+          contactList.appendChild(div);
+        });
+      } catch (err) {
+        console.error('Error loading contacts', err);
+      }
+    }
+
+    function openChat(contact) {
+      currentContact = contact;
+      document.getElementById('chat-section').classList.remove('hidden');
+      document.getElementById('chatFrom').textContent = userMobile;
+      document.getElementById('chatTo').textContent = contact.name;
+      loadMessages(contact.mobile);
+      toggleSidebar();
+    }
+
+    function createMessageBubble(msg, fromSelf) {
+      const el = document.createElement('div');
+      el.className = 'bg-green-200 text-black p-3 rounded-xl shadow mb-2 max-w-xs break-words' + (fromSelf ? ' ml-auto' : '');
+      const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      el.innerHTML = `
+        <div class="text-sm font-semibold mb-1">${fromSelf ? 'You' : currentContact.name}</div>
+        <div>${msg.message || ''}</div>
+        ${msg.imageUrl ? `<div class="mt-2"><img src="${msg.imageUrl}" alt="sent image" class="max-w-xs rounded" /></div>` : ''}
+        <div class="text-xs text-gray-600 mt-1 text-right">${time}</div>
+      `;
+      return el;
+    }
+
+    async function loadMessages(toMobile) {
+      try {
+        const res = await fetch(`https://jgqw00mq-3002.inc1.devtunnels.ms/messages?fromMobile=${userMobile}&toMobile=${toMobile}`);
+        const messages = await res.json();
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        messages.forEach(msg => {
+          const fromSelf = msg.sender_id === userId;
+          const el = createMessageBubble(msg, fromSelf);
+          chatMessages.appendChild(el);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } catch (err) {
+        console.error('Error loading messages', err);
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('message-input');
+      const message = input.value.trim();
+      if (!message || !currentContact) return;
+
+      socket.emit('send-message', {
+        from: userMobile,
+        to: currentContact.mobile,
+        message
+      });
+
+      const msg = { message, sender_id: userId, timestamp: Date.now() };
+      const el = createMessageBubble(msg, true);
+      const chatMessages = document.getElementById('chat-messages');
+      chatMessages.appendChild(el);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      input.value = '';
+    }
+
+    document.getElementById('message-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    socket.on('receive-message', (msg) => {
+      if (!currentContact) return;
+      const isRelevant =
+        (msg.from === currentContact.mobile && msg.to === userMobile) ||
+        (msg.from === userMobile && msg.to === currentContact.mobile);
+
+      if (isRelevant) {
+        const fromSelf = msg.sender_id === userId;
+        const el = createMessageBubble(msg, fromSelf);
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.appendChild(el);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    });
+
+    function openAddContactModal() {
+      document.getElementById('addContactModal').classList.remove('hidden');
+    }
+
+    function closeAddContactModal() {
+      document.getElementById('addContactModal').classList.add('hidden');
+    }
+
+    async function submitAddContact() {
+      const contactMobile = document.getElementById('contactMobile').value.trim();
+      if (!contactMobile) return;
+
+      try {
+        const res = await fetch('https://jgqw00mq-3002.inc1.devtunnels.ms/add-contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ myMobile: userMobile, contactMobile })
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert('Contact added successfully!');
+          closeAddContactModal();
+          fetchContacts();
+        } else {
+          alert(result.error || 'Failed to add contact.');
+        }
+      } catch (err) {
+        console.error('Error adding contact:', err);
+      }
+    }
+
+    async function sendImage() {
+      const input = document.getElementById('image-input');
+      const file = input.files[0];
+      if (!file || !currentContact) return;
+
+      const formData = new FormData();
+      formData.append('from', userMobile);
+      formData.append('to', currentContact.mobile);
+      formData.append('image', file);
+
+      try {
+        const res = await fetch('https://jgqw00mq-3002.inc1.devtunnels.ms/send-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          const msg = { message: '[Image]', imageUrl: result.imageUrl, sender_id: userId, timestamp: Date.now() };
+          const el = createMessageBubble(msg, true);
+          const chatMessages = document.getElementById('chat-messages');
+          chatMessages.appendChild(el);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+          alert('Image upload failed.');
+        }
+      } catch (err) {
+        console.error('Image upload error:', err);
       }
 
-      setChatBackgroundImage();
-    });
+      input.value = '';
+    }
+
+    // Set dynamic background
+    function setChatBackgroundImage() {
+  const chatMessages = document.getElementById('chat-messages');
+  const isSpecialUser = ['143143143143', '143143143100'].includes(userMobile);
+  const isMobile = window.innerWidth <= 768;
+
+  if (isSpecialUser && isMobile) {
+    chatMessages.style.backgroundImage = "url('deep_chat.png')";
+  } else {
+    chatMessages.style.backgroundImage = "url('1724980562768.jpg')";
+  }
+
+  chatMessages.style.backgroundSize = "cover";
+  chatMessages.style.backgroundPosition = "center";
+};
+window.onload = function () {
+  setChatBackgroundImage();
+  fetchContacts();
+};
+
   </script>
 </body>
 </html>
