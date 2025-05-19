@@ -294,21 +294,19 @@
 
     // Set dynamic background
     function setChatBackgroundImage() {
-      const chatMessages = document.getElementById('chat-messages');
-      if (userMobile === '143143143143' || userMobile === '143143143100') {
-        chatMessages.style.backgroundImage = "url('deep_chat.png')";
-      } else {
-        chatMessages.style.backgroundImage = "url('1724980562768.jpg')";
-      }
-      chatMessages.style.backgroundSize = "cover";
-      chatMessages.style.backgroundPosition = "center";
-    }
+  const chatMessages = document.getElementById('chat-messages');
+  const isSpecialUser = ['143143143143', '143143143100'].includes(userMobile);
+  const isMobile = window.innerWidth <= 768;
 
-    // Initialize
-    window.onload = function () {
-      setChatBackgroundImage();
-      fetchContacts();
-    };
+  if (isSpecialUser && isMobile) {
+    chatMessages.style.backgroundImage = "url('deep_chat.png')";
+  } else {
+    chatMessages.style.backgroundImage = "url('1724980562768.jpg')";
+  }
+
+  chatMessages.style.backgroundSize = "cover";
+  chatMessages.style.backgroundPosition = "center";
+};
   </script>
 </body>
 </html>
